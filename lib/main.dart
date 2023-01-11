@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rive_animation/screens/OnbodingScreen.dart';
+import 'package:rive_animation/screens/onBodingScreen/OnbodingScreen.dart';
 
 void main() {
   runApp(const MyApp());

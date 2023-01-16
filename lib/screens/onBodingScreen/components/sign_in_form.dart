@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:rive/rive.dart';
+import 'package:rive_animation/screens/entryPoint_screen/entry_point.dart';
+import '../../../utils/rive_utils.dart';
 
 class SignInForm extends StatefulWidget {
   const SignInForm({
@@ -17,6 +19,7 @@ class _SignInFormState extends State<SignInForm> {
   late SMITrigger error;
   late SMITrigger reset;
   bool isShowloading = false;
+  bool isShowCompeti = false;
   StateMachineController getRiveController(Artboard artboard) {
     StateMachineController controller =
         StateMachineController.fromArtboard(artboard, "State Machine 1")!;
@@ -88,7 +91,7 @@ class _SignInFormState extends State<SignInForm> {
                           'assets/RiveAssets/check.riv',
                           onInit: (artboard) {
                             StateMachineController controller =
-                                getRiveController(artboard);
+                                RiveUtils.getRiveController(artboard);
                             check = controller.findSMI("Check") as SMITrigger;
                             error = controller.findSMI("Error") as SMITrigger;
                             reset = controller.findSMI("Reset") as SMITrigger;
@@ -100,11 +103,41 @@ class _SignInFormState extends State<SignInForm> {
         ),
         ElevatedButton.icon(
             onPressed: () {
-              if (SignInForm.formkey.currentState!.validate()) {
-                setState(() {
-                  isShowloading = true;
-                });
-              } else {}
+              setState(() {
+                isShowloading = true;
+              });
+              Future.delayed(
+                const Duration(seconds: 1),
+                () {
+                  if (SignInForm.formkey.currentState!.validate()) {
+                    check.change(true);
+                    Future.delayed(
+                      const Duration(milliseconds: 2000),
+                      () => setState(() {
+                        isShowloading = false;
+                      }),
+                    );
+                    Future.delayed(
+                      const Duration(seconds: 2),
+                      () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EntryPoint(),
+                            ));
+                      },
+                    );
+                  } else {
+                    error.fire();
+                    Future.delayed(
+                      const Duration(milliseconds: 2000),
+                      () => setState(() {
+                        isShowloading = false;
+                      }),
+                    );
+                  }
+                },
+              );
             },
             style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 56),

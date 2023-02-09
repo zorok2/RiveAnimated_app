@@ -14,14 +14,35 @@ class EntryPoint extends StatefulWidget {
   State<EntryPoint> createState() => _EntryPointState();
 }
 
-class _EntryPointState extends State<EntryPoint> {
+class _EntryPointState extends State<EntryPoint>
+    with SingleTickerProviderStateMixin {
   RiveAssets selectedBottomNav = bottomNavs.first;
   late SMIBool userTigger;
   late SMIBool sideBarClosed;
   bool isSlideMenuclosed = true;
+  late AnimationController _animationController;
+  late Animation<double> animation;
+  late Animation<double> scaleAnimation;
   @override
   void initState() {
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 200))
+      ..addListener(() {
+        setState(() {});
+      });
+    animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
+        parent: _animationController, curve: Curves.fastOutSlowIn));
+    scaleAnimation = Tween<double>(begin: 1, end: 0.8).animate(CurvedAnimation(
+        parent: _animationController, curve: Curves.fastOutSlowIn));
+
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,14 +61,20 @@ class _EntryPointState extends State<EntryPoint> {
               height: MediaQuery.of(context).size.height,
               child: const SlideMenu()),
           Transform.translate(
-              offset: Offset(isSlideMenuclosed ? 0 : 288, 0),
+              // offset: Offset(isSlideMenuclosed ? 0 : 288, 0),
+              offset: Offset(animation.value * 288, 0),
               child: Transform.scale(
-                  scale: isSlideMenuclosed ? 1 : 0.8,
+                  scale: scaleAnimation.value,
                   child: const ClipRRect(
                       borderRadius: BorderRadius.all(Radius.circular(14)),
                       child: HomePage()))),
           MenuButton(
             press: () {
+              if (isSlideMenuclosed) {
+                _animationController.forward();
+              } else {
+                _animationController.reverse();
+              }
               sideBarClosed.value = !sideBarClosed.value;
               setState(() {
                 isSlideMenuclosed = sideBarClosed.value;

@@ -3,6 +3,9 @@ import 'package:rive/rive.dart';
 import 'package:rive_animation/constants.dart';
 import 'package:rive_animation/screens/home_screen/home_page.dart';
 import 'package:rive_animation/utils/rive_utils.dart';
+import 'package:rive_animation/widgets/slide_menu.dart';
+
+import '../../model/rive_model.dart';
 
 class EntryPoint extends StatefulWidget {
   const EntryPoint({super.key});
@@ -14,6 +17,8 @@ class EntryPoint extends StatefulWidget {
 class _EntryPointState extends State<EntryPoint> {
   RiveAssets selectedBottomNav = bottomNavs.first;
   late SMIBool userTigger;
+  late SMIBool sideBarClosed;
+  bool isSlideMenuclosed = true;
   @override
   void initState() {
     super.initState();
@@ -22,7 +27,47 @@ class _EntryPointState extends State<EntryPoint> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: const HomePage(),
+      extendBody: true,
+      resizeToAvoidBottomInset: false,
+      backgroundColor: const Color(0xff17023A),
+      body: Stack(
+        children: [
+          AnimatedPositioned(
+              left: isSlideMenuclosed ? -288 : 0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.fastOutSlowIn,
+              width: 288,
+              height: MediaQuery.of(context).size.height,
+              child: const SlideMenu()),
+          Transform.translate(
+              offset: Offset(isSlideMenuclosed ? 0 : 288, 0),
+              child: Transform.scale(
+                  scale: isSlideMenuclosed ? 1 : 0.8,
+                  child: const ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(14)),
+                      child: HomePage()))),
+          MenuButton(
+            press: () {
+              sideBarClosed.value = !sideBarClosed.value;
+              setState(() {
+                isSlideMenuclosed = sideBarClosed.value;
+              });
+              // sideBarClosed.change(true);
+              // Future.delayed(
+              //   const Duration(seconds: 1),
+              //   () => sideBarClosed.change(!true),
+              // );
+            },
+            riveOninit: (artboard) {
+              StateMachineController controller = RiveUtils.getRiveController(
+                  artboard,
+                  stateMachineName: 'State Machine');
+              sideBarClosed = controller.findSMI('isOpen') as SMIBool;
+              sideBarClosed.value = true;
+            },
+          )
+        ],
+      ),
       bottomNavigationBar: SafeArea(
           child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -96,18 +141,37 @@ class _EntryPointState extends State<EntryPoint> {
   }
 }
 
-class RiveAssets {
-  final String src;
-  final String artBoard, stateMachineName, title;
-  late SMIBool? input;
+class MenuButton extends StatelessWidget {
+  const MenuButton({
+    Key? key,
+    required this.press,
+    required this.riveOninit,
+  }) : super(key: key);
+  final VoidCallback press;
+  final ValueChanged<Artboard> riveOninit;
 
-  RiveAssets(this.src,
-      {required this.artBoard,
-      required this.stateMachineName,
-      required this.title,
-      this.input});
-  set setInput(SMIBool input) {
-    this.input = input;
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: GestureDetector(
+        onTap: press,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12, offset: Offset(0, 3), blurRadius: 8)
+              ]),
+          child: RiveAnimation.asset(
+            'assets/RiveAssets/menu_button.riv',
+            onInit: riveOninit,
+          ),
+        ),
+      ),
+    );
   }
 }
 
